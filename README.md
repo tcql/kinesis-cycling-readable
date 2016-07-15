@@ -1,5 +1,7 @@
 ## kinesis-cycling-readable
 
+![](https://api.travis-ci.org/tcql/kinesis-cycling-readable.svg)
+
 ### Usage 
 
 ```js
