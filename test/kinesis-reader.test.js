@@ -10,7 +10,7 @@ test('catchCycle retries on throughput exceptions', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1', 'shard-2'];
 
   reader.catchCycle(streamState)({code: 'ProvisionedThroughputExceededException'}).nodeify(function (err, result) {
@@ -23,7 +23,7 @@ test('catchCycle retries on throughput exceptions', function (t) {
 
 test('catchCycle fails on other errors', function (t) {
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1'];
 
   reader.catchCycle(streamState)({code: 'AnotherException'}).nodeify(function (err, result) {
@@ -38,7 +38,7 @@ test('cycleShards moves to the next shard', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1', 'shard-2'];
 
   var succeeded = 0;
@@ -68,7 +68,7 @@ test('cycleShards loops around if allowLooping = true', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {allowLooping: true});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {allowLooping: true});
   streamState.shards = ['shard-1', 'shard-2'];
 
   var succeeded = 0;
@@ -98,7 +98,7 @@ test('cycleShards fails if looping is disabled an no more shards exist', functio
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1', 'shard-2'];
 
   var succeeded = 0;
@@ -134,7 +134,7 @@ test('getRecords resolves with fetched kinesis records', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1', 'shard-2'];
   streamState.currShard = 0;
   streamState.shardIterators = {'shard-1': 'ABCD'};
@@ -155,7 +155,7 @@ test('getRecords rejects with kinesis errors', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1', 'shard-2'];
   streamState.currShard = 0;
   streamState.shardIterators = {'shard-1': 'ABCD'};
@@ -183,7 +183,7 @@ test('getShardList sets list of shards for streamState', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
 
   reader.getShardList(streamState).nodeify(function (err, res) {
     t.deepEqual(streamState.shards, [
@@ -226,7 +226,7 @@ test('getShardList loops when there HasMoreShards is true', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
 
   reader.getShardList(streamState).nodeify(function (err, res) {
     t.deepEqual(streamState.shards, [
@@ -248,7 +248,7 @@ test('getShardList rejects with kinesis errors', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
 
   reader.getShardList(streamState).nodeify(function (err, res) {
     t.equal(err, 'An error occurred');
@@ -263,7 +263,7 @@ test('getShardIterator sets streamState.shardIterators', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1'];
   streamState.currShard = 0;
 
@@ -281,7 +281,7 @@ test('getShardIterator rejects with kinesis errors', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', 'TRIM_HORIZON', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
   streamState.shards = ['shard-1'];
   streamState.currShard = 0;
 
@@ -315,7 +315,7 @@ test('reader sets up and provides a readable stream of kinesis data', function (
   });
 
   var kinesis = new AWS.Kinesis();
-  var kread = reader(kinesis, 'test-stream', 'TRIM_HORIZON');
+  var kread = reader(kinesis, 'test-stream');
 
   var chunks = [];
   kread.on('data', function (records) {

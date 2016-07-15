@@ -2,10 +2,10 @@ var from2 = require('from2');
 var Promise = require('promise');
 var xtend = require('xtend');
 
-module.exports = function (kinesis, streamName, iteratorType, opts) {
-  var streamState = initStreamState(kinesis, streamState, iteratorType, opts);
+module.exports = function (kinesis, streamName, opts) {
+  var streamState = initStreamState(kinesis, streamState, opts);
   var closed = false;
-  
+
   var readable = from2.obj(function (size, next) {
     if (closed) return next(null, null);
     var promiseChain;
@@ -98,11 +98,17 @@ function getShardIterator(streamState) {
   var shard = streamState.shards[streamState.currShard];
 
   return new Promise(function (resolve, reject) {
-    streamState.kinesis.getShardIterator({
+    var params = {
       StreamName: streamState.streamName,
       ShardId: shard,
-      ShardIteratorType: streamState.iteratorType
-    }, function (e, d) {
+      ShardIteratorType: streamState.options.iteratorType
+    };
+
+    if (params.ShardIteratorType === 'AT_TIMESTAMP') {
+      params.Timestamp = streamState.options.iteratorTimestamp || new Date();
+    }
+    
+    streamState.kinesis.getShardIterator(params, function (e, d) {
       if (e) return reject(e);
 
       streamState.shardIterators[shard] = d.ShardIterator;
@@ -111,13 +117,14 @@ function getShardIterator(streamState) {
   });
 }
 
-function initStreamState(kinesis, streamName, iteratorType, opts) {
+function initStreamState(kinesis, streamName, opts) {
   if (!options) options = {};
 
   var options = xtend({
     readpause: 1000,
     cyclepause: 1000,
-    allowLooping: false
+    allowLooping: false,
+    iteratorType: 'LATEST'
   }, opts);
 
   var closed = false;
@@ -126,7 +133,6 @@ function initStreamState(kinesis, streamName, iteratorType, opts) {
     shards: null,
     currShard: -1,
     shardIterators: {},
-    iteratorType: iteratorType,
     kinesis: kinesis,
     options: options
   };
