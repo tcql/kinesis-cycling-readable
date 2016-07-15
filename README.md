@@ -22,9 +22,10 @@ Upon encountering an `ProvisionedThroughputExceededException`, the stream will a
 {
   readpause: 1000, // Milliseconds to wait between `getRecords` calls
   cyclepause: 1000, // Milliseconds to wait after cycling shards
-  allowLooping: false, // If true, when the last shard is cycled, start back at the first.
+  allowLooping: false, // If true, when the last shard is cycled, start back at the first shard
                        // If false, the stream emits an error when the last shard is exhausted
-  iteratorType: 'LATEST' // Type of ShardIterator to request. Must be one of (TRIM_HORIZON | LATEST | AT_TIMESTAMP)
+  iteratorType: 'LATEST', // Type of ShardIterator to request. Must be one of 
+                          // TRIM_HORIZON | LATEST | AT_TIMESTAMP
   iteratorTimestamp: null // Timestamp to use for `AT_TIMESTAMP` ShardIterators
 }
 ```
