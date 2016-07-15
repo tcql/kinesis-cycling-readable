@@ -291,3 +291,37 @@ test('getShardIterator rejects with kinesis errors', function (t) {
     t.end();
   });
 });
+
+test('reader sets up and provides a readable stream of kinesis data', function (t) {
+  AWSMock.mock('Kinesis', 'describeStream', function (params, cb) {
+    cb(null, {
+      StreamDescription: {
+        Shards: [
+          {ShardId: 'shard-0'},
+          {ShardId: 'shard-1'},
+        ],
+        HasMoreShards: false
+      }
+    });
+  });
+  AWSMock.mock('Kinesis', 'getShardIterator', function (params, cb) {
+    cb(null, {ShardIterator: 'ABCD'});
+  });
+  AWSMock.mock('Kinesis', 'getRecords', function (params, cb) {
+    cb(null, {
+      NextShardIterator: 'EFGH',
+      Records: [1, 2, 3]
+    })
+  });
+
+  var kinesis = new AWS.Kinesis();
+  var kread = reader(kinesis, 'test-stream', 'TRIM_HORIZON');
+
+  var chunks = [];
+  kread.on('data', function (records) {
+    t.deepEqual(records, [1,2,3], 'receives records from stream');
+    kread.close();
+  }).on('end', function () {
+    t.end();
+  });
+});

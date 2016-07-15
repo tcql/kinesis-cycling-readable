@@ -4,7 +4,8 @@ var xtend = require('xtend');
 
 module.exports = function (kinesis, streamName, iteratorType, opts) {
   var streamState = initStreamState(kinesis, streamState, iteratorType, opts);
-
+  var closed = false;
+  
   var readable = from2.obj(function (size, next) {
     if (closed) return next(null, null);
     var promiseChain;
