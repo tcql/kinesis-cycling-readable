@@ -3,7 +3,7 @@ var Promise = require('promise');
 var xtend = require('xtend');
 
 module.exports = function (kinesis, streamName, opts) {
-  var streamState = initStreamState(kinesis, streamState, opts);
+  var streamState = initStreamState(kinesis, streamName, opts);
   var closed = false;
 
   var readable = from2.obj(function (size, next) {
