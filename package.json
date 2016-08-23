@@ -1,6 +1,6 @@
 {
   "name": "kinesis-cycling-readable",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Node.js readable stream for Kinesis, with automatic shard-cycling abilities",
   "main": "kinesis-reader.js",
   "scripts": {
