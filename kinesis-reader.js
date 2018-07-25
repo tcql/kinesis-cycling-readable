@@ -27,11 +27,14 @@ module.exports = function (kinesis, streamName, opts) {
 function catchCycle(streamState) {
   return function (error) {
     return new Promise(function (resolve, reject) {
-      // right now, we'll only handle provisioned throughputs errors. Otherwise, we'll emit an error
-      if (!error.code || error.code !== 'ProvisionedThroughputExceededException') return reject(error);
-      
-      return cycleShards(streamState)
-        .then(function () { resolve([]); })
+      if (
+        error === 'NullShardIterator' || 
+        error.code && error.code === 'ProvisionedThroughputExceededException'
+      ) {
+        return cycleShards(streamState)
+          .then(function () { resolve([]); })
+      }
+      return reject(error)
     });
   };
 }
@@ -58,6 +61,8 @@ function getRecords(streamState) {
   return new Promise(function (resolve, reject) {
     streamState.kinesis.getRecords({ShardIterator: iter}, function (err, data) {
       if (err) return reject(err);
+
+      if (!data.NextShardIterator) return reject('NullShardIterator')
 
       // Update iterator
       streamState.shardIterators[shard] = data.NextShardIterator;
