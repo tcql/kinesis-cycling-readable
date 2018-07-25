@@ -305,7 +305,9 @@ test('getShardIterator sets streamState.shardIterators', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {
+    iteratorType: 'AT_TIMESTAMP'
+  });
   streamState.shards = ['shard-1'];
   streamState.currShard = 0;
 
