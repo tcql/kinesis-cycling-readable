@@ -21,6 +21,23 @@ test('catchCycle retries on throughput exceptions', function (t) {
   });
 });
 
+test('catchCycle retries on NullShardIterator', function (t) {
+  AWSMock.mock('Kinesis', 'getShardIterator', function (params, cb) {
+    cb(null, {ShardIterator: null});
+  });
+
+  var kinesis = new AWS.Kinesis();
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
+  streamState.shards = ['shard-1', 'shard-2'];
+
+  reader.catchCycle(streamState)('NullShardIterator').nodeify(function (err, result) {
+    t.error(err);
+    t.equal(streamState.shardIterators['shard-1'], null, 'shard iterator was updated');
+    AWSMock.restore('Kinesis');
+    t.end();
+  });
+});
+
 test('catchCycle fails on other errors', function (t) {
   var kinesis = new AWS.Kinesis();
   var streamState = reader.initStreamState(kinesis, 'test-stream', {});
@@ -167,6 +184,31 @@ test('getRecords rejects with kinesis errors', function (t) {
   });
 });
 
+test('getRecords rejects with null NextShardIterator', function (t) {
+  AWSMock.mock('Kinesis', 'getRecords', function (params, cb) {
+    t.equal(params.ShardIterator, 'ABCD');
+    cb(null, {
+      NextShardIterator: null,
+      Records: [
+        {id: 1},
+        {id: 2}
+      ]
+    });
+  });
+
+  var kinesis = new AWS.Kinesis();
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
+  streamState.shards = ['shard-1', 'shard-2'];
+  streamState.currShard = 0;
+  streamState.shardIterators = {'shard-1': 'ABCD'};
+
+  reader.getRecords(streamState).nodeify(function (err) {
+    t.equal(err, 'NullShardIterator', 'rejected with the expected error');
+    AWSMock.restore('Kinesis');
+    t.end();
+  });
+});
+
 
 test('getShardList sets list of shards for streamState', function (t) {
   AWSMock.mock('Kinesis', 'describeStream', function (params, cb) {
@@ -263,7 +305,9 @@ test('getShardIterator sets streamState.shardIterators', function (t) {
   });
 
   var kinesis = new AWS.Kinesis();
-  var streamState = reader.initStreamState(kinesis, 'test-stream', {});
+  var streamState = reader.initStreamState(kinesis, 'test-stream', {
+    iteratorType: 'AT_TIMESTAMP'
+  });
   streamState.shards = ['shard-1'];
   streamState.currShard = 0;
 
